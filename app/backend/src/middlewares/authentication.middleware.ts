@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import JWTUtils from '../utils/JWTUtils';
 
 type NewRequest = Request & {
-  user?: any
+  user?: { id: number; username: string; email: string };
 };
 
 export default class Auth {
