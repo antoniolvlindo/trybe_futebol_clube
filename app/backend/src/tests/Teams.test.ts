@@ -11,7 +11,7 @@ import {
   getAllFromService,
   getAllTeams,
   getByFromService,
-  teamMock,
+
 } from './mock/Teams.mock';
 import TeamController from '../controllers/TeamController';
 
