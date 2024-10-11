@@ -21,6 +21,34 @@ const MatchFormat = (match: MatchFormatted) => {
   return matchFormatted;
 };
 
+const inProgressTrue = {
+  where: { inProgress: true },
+  include: [
+    { model: SequelizeTeam,
+      as: 'homeTeam',
+      attributes: ['teamName'],
+    },
+    { model: SequelizeTeam,
+      as: 'awayTeam',
+      attributes: ['teamName'],
+    },
+  ],
+};
+
+const inProgressFalse = {
+  where: { inProgress: false },
+  include: [
+    { model: SequelizeTeam,
+      as: 'homeTeam',
+      attributes: ['teamName'],
+    },
+    { model: SequelizeTeam,
+      as: 'awayTeam',
+      attributes: ['teamName'],
+    },
+  ],
+};
+
 export default class MatchService {
   private model = SequelizeMatch;
 
@@ -36,6 +64,18 @@ export default class MatchService {
           attributes: ['teamName'],
         },
       ] });
+    const matchFormatted = matches.map((m) => MatchFormat(m as unknown as MatchFormatted));
+
+    return { status: 'SUCCESSFUL', data: matchFormatted };
+  }
+
+  async getMatchesInProgress(inProgress: string): Promise<ServiceResponse<MatchFormatted[]>> {
+    if (inProgress === 'true') {
+      const matches = await this.model.findAll(inProgressTrue);
+      const matchFormatted = matches.map((m) => MatchFormat(m as unknown as MatchFormatted));
+      return { status: 'SUCCESSFUL', data: matchFormatted };
+    }
+    const matches = await this.model.findAll(inProgressFalse);
     const matchFormatted = matches.map((m) => MatchFormat(m as unknown as MatchFormatted));
 
     return { status: 'SUCCESSFUL', data: matchFormatted };
