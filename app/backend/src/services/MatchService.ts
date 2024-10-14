@@ -49,6 +49,12 @@ const inProgressFalse = {
   ],
 };
 
+interface UpdateMatch {
+  id: number,
+  homeTeamGoals: number,
+  awayTeamGoals: number
+}
+
 export default class MatchService {
   private model = SequelizeMatch;
 
@@ -84,5 +90,10 @@ export default class MatchService {
   async finishMatch(id: number) {
     await this.model.update({ inProgress: false }, { where: { id } });
     return { status: 'SUCCESSFUL', data: { message: 'Finished' } };
+  }
+
+  async updateMatch({ id, homeTeamGoals, awayTeamGoals }: UpdateMatch) {
+    await this.model.update({ homeTeamGoals, awayTeamGoals }, { where: { id } });
+    return { status: 'SUCCESSFUL', data: { message: 'updated' } };
   }
 }

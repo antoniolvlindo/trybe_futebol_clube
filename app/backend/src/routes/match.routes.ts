@@ -11,5 +11,10 @@ router.patch(
   (req: Request, res: Response, next: NextFunction) => new Auth(req, res, next).auth(),
   (_req: Request, res: Response) => matchController.finishMatch(_req, res),
 );
+router.patch(
+  '/:id',
+  (req: Request, res: Response, next: NextFunction) => new Auth(req, res, next).auth(),
+  (_req: Request, res: Response) => matchController.updateMatch(_req, res),
+);
 
 export default router;
