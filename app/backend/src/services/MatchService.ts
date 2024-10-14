@@ -55,6 +55,13 @@ interface UpdateMatch {
   awayTeamGoals: number
 }
 
+interface NewMatch {
+  homeTeamId: number,
+  awayTeamId: number,
+  homeTeamGoals: number,
+  awayTeamGoals: number
+}
+
 export default class MatchService {
   private model = SequelizeMatch;
 
@@ -95,5 +102,26 @@ export default class MatchService {
   async updateMatch({ id, homeTeamGoals, awayTeamGoals }: UpdateMatch) {
     await this.model.update({ homeTeamGoals, awayTeamGoals }, { where: { id } });
     return { status: 'SUCCESSFUL', data: { message: 'updated' } };
+  }
+
+  async createMatch(match: NewMatch) {
+    const newMatch = {
+      ...match,
+      inProgress: true,
+    };
+    if (newMatch.homeTeamId === newMatch.awayTeamId) {
+      return { status: 'INVALIDVALUE',
+        data: { message: 'It is not possible to create a match with two equal teams' } };
+    }
+    const ids = [match.homeTeamId, match.awayTeamId];
+    const teams = await Promise.all(ids.map((id) =>
+      SequelizeTeam.findOne({ where: { id }, raw: true })));
+
+    if (teams.some((team) => team === null)) {
+      return { status: 'NOT_FOUND', data: { message: 'There is no team with such id!' } };
+    }
+    const newMatchCreated = await this.model.create(newMatch, { raw: true });
+
+    return { status: 'CREATED', data: newMatchCreated };
   }
 }

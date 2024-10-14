@@ -6,6 +6,11 @@ const router = Router();
 const matchController = new MatchController();
 
 router.get('/', (_req: Request, res: Response) => matchController.getAllMatches(_req, res));
+router.post(
+  '/',
+  (req: Request, res: Response, next: NextFunction) => new Auth(req, res, next).auth(),
+  (_req: Request, res: Response) => matchController.createMatch(_req, res),
+);
 router.patch(
   '/:id/finish',
   (req: Request, res: Response, next: NextFunction) => new Auth(req, res, next).auth(),
