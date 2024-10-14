@@ -80,4 +80,9 @@ export default class MatchService {
 
     return { status: 'SUCCESSFUL', data: matchFormatted };
   }
+
+  async finishMatch(id: number) {
+    await this.model.update({ inProgress: false }, { where: { id } });
+    return { status: 'SUCCESSFUL', data: { message: 'Finished' } };
+  }
 }
