@@ -10,21 +10,25 @@ export default class LeaderboardService {
 
     const leaderboard: ILeaderboard[] = teams.map((team) => {
       const homeMatches = matches.filter((match) => match.homeTeamId === team.id);
-
       return LeaderboardService.createTeamStats(team.teamName, homeMatches);
     });
 
-    return { status: 'SUCCESSFUL', data: leaderboard };
+    const sortedLeaderboard = leaderboard.sort((a, b) =>
+      b.totalPoints - a.totalPoints
+      || b.totalVictories - a.totalVictories
+      || b.goalsBalance - a.goalsBalance
+      || b.goalsFavor - a.goalsFavor
+      || a.goalsOwn - b.goalsOwn);
+
+    return { status: 'SUCCESSFUL', data: sortedLeaderboard };
   }
 
   private static createTeamStats(teamName: string, homeMatches: SequelizeMatch[]): ILeaderboard {
-    const totalPoints = LeaderboardService.calculateTotalPoints(homeMatches);
-    const totalVictories = LeaderboardService.countVictories(homeMatches);
-    const totalDraws = LeaderboardService.countDraws(homeMatches);
-    const totalLosses = LeaderboardService.countLosses(homeMatches);
-    const goalsFavor = homeMatches.reduce((acc, match) => acc + match.homeTeamGoals, 0);
-    const goalsOwn = homeMatches.reduce((acc, match) => acc + match.awayTeamGoals, 0);
+    const {
+      totalPoints, totalVictories, totalDraws, totalLosses,
+    } = this.calculateBasicStats(homeMatches);
 
+    const { goalsFavor, goalsOwn } = this.calculateGoals(homeMatches);
     return {
       name: teamName,
       totalPoints,
@@ -34,7 +38,41 @@ export default class LeaderboardService {
       totalLosses,
       goalsFavor,
       goalsOwn,
+      goalsBalance: this.calculateGoalsBalance(goalsFavor, goalsOwn),
+      efficiency: this.calculateEfficiency(totalPoints, homeMatches.length),
     };
+  }
+
+  private static calculateBasicStats(homeMatches: SequelizeMatch[]) {
+    return {
+      totalPoints: this.calculateTotalPoints(homeMatches),
+      totalVictories: this.countVictories(homeMatches),
+      totalDraws: this.countDraws(homeMatches),
+      totalLosses: this.countLosses(homeMatches),
+    };
+  }
+
+  private static calculateGoals(homeMatches: SequelizeMatch[]) {
+    return {
+      goalsFavor: this.sumGoals(homeMatches, 'homeTeamGoals'),
+      goalsOwn: this.sumGoals(homeMatches, 'awayTeamGoals'),
+    };
+  }
+
+  private static sumGoals(
+    matches: SequelizeMatch[],
+    field: 'homeTeamGoals' | 'awayTeamGoals',
+  ): number {
+    return matches.reduce((acc, match) => acc + match[field], 0);
+  }
+
+  private static calculateGoalsBalance(goalsFavor: number, goalsOwn: number): number {
+    return goalsFavor - goalsOwn;
+  }
+
+  private static calculateEfficiency(totalPoints: number, totalGames: number): string {
+    const efficiency = (totalPoints / (totalGames * 3)) * 100;
+    return efficiency.toFixed(2);
   }
 
   private static calculateTotalPoints(matches: SequelizeMatch[]): number {
