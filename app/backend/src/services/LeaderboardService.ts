@@ -24,6 +24,39 @@ export default class LeaderboardService {
     return { status: 'SUCCESSFUL', data: sortedLeaderboard };
   }
 
+  public static async getCombinedLeaderboard(): Promise<ServiceResponse<ILeaderboard[]>> {
+    const teams = await SequelizeTeam.findAll();
+    const matches = await SequelizeMatch.findAll({ where: { inProgress: false } });
+
+    const homeLeaderboard = this.generateLeaderboard(teams, matches);
+    const awayLeaderboard = this.generateAwayLeaderboard(teams, matches);
+
+    const combinedLeaderboard = teams.map((team) => {
+      const homeStats = homeLeaderboard.find((t) => t.name === team.teamName);
+      const awayStats = awayLeaderboard.find((t) => t.name === team.teamName);
+
+      return {
+        name: team.teamName,
+        totalPoints: (homeStats?.totalPoints || 0) + (awayStats?.totalPoints || 0),
+        totalGames: (homeStats?.totalGames || 0) + (awayStats?.totalGames || 0),
+        totalVictories: (homeStats?.totalVictories || 0) + (awayStats?.totalVictories || 0),
+        totalDraws: (homeStats?.totalDraws || 0) + (awayStats?.totalDraws || 0),
+        totalLosses: (homeStats?.totalLosses || 0) + (awayStats?.totalLosses || 0),
+        goalsFavor: (homeStats?.goalsFavor || 0) + (awayStats?.goalsFavor || 0),
+        goalsOwn: (homeStats?.goalsOwn || 0) + (awayStats?.goalsOwn || 0),
+        goalsBalance: ((homeStats?.goalsFavor || 0) + (awayStats?.goalsFavor || 0)) - ((homeStats?.goalsOwn || 0) + (awayStats?.goalsOwn || 0)),
+        efficiency: this.calculateEfficiency(
+          (homeStats?.totalPoints || 0) + (awayStats?.totalPoints || 0),
+          (homeStats?.totalGames || 0) + (awayStats?.totalGames || 0)
+        ),
+      };
+    });
+
+    const sortedCombinedLeaderboard = this.sortLeaderboard(combinedLeaderboard);
+
+    return { status: 'SUCCESSFUL', data: sortedCombinedLeaderboard };
+  }
+
   private static generateLeaderboard(
     teams: SequelizeTeam[],
     matches: SequelizeMatch[],
