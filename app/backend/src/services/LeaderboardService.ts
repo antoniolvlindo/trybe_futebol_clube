@@ -44,13 +44,13 @@ export default class LeaderboardService {
     });
   }
 
-  private static sortLeaderboard(leaderboard: ILeaderboard[]): ILeaderboard[] {
-    return leaderboard.sort((a, b) =>
-      b.totalPoints - a.totalPoints
-    || b.totalVictories - a.totalVictories
-    || b.goalsBalance - a.goalsBalance
-    || b.goalsFavor - a.goalsFavor
-    || a.goalsOwn - b.goalsOwn);
+  static sortLeaderboard(leaderboard: ILeaderboard[]): ILeaderboard[] {
+    return leaderboard.sort((a, b) => {
+      if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+      if (b.goalsBalance !== a.goalsBalance) return b.goalsBalance - a.goalsBalance;
+      if (b.goalsFavor !== a.goalsFavor) return b.goalsFavor - a.goalsFavor;
+      return a.name.localeCompare(b.name);
+    });
   }
 
   private static createTeamStats(teamName: string, matches: SequelizeMatch[]): ILeaderboard {
